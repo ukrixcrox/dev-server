@@ -11,15 +11,15 @@ mod config;
 // WebSocket handshake and start `WebSocket` actor.
 #[get("/ws")]
 async fn websocket(req:HttpRequest, stream: web::Payload, notifier: Data<watch::Sender<()>>) -> Result<HttpResponse, Error>{
-    let (sender, mut receiver, response) = ws::start(&req, stream)?;
+    let (sender, mut _receiver, response) = ws::start(&req, stream)?;
 
     let mut notifier = notifier.subscribe();
     
     tokio::spawn(async move{
         loop{
             notifier.changed().await.unwrap();
-
-            //log::error!("foo");
+           
+            log::error!("foo");
             if sender.send(ws::Message::Text(("reload").into())).await.is_err(){    
                 break
             };
@@ -45,13 +45,12 @@ async fn main() -> std::io::Result<()>{
         send2.send_replace(());
     }).unwrap();
 
-    watcher.watch(serverconfig_parsed.project_dir.as_ref(), RecursiveMode::Recursive).unwrap();
-
+    watcher.watch(serverconfig_parsed.projectfolder_path.as_ref(), RecursiveMode::Recursive).unwrap();
 
     HttpServer::new(move || {
         App::new()
             .service(websocket)
-            .service(Files::new("/", serverconfig_parsed.project_dir.clone()).index_file("index.html"))
+            .service(Files::new("/", serverconfig_parsed.projectfolder_path.clone()).index_file("index.html"))
             .app_data(send.clone())
             .wrap(Logger::default())
     })

@@ -3,9 +3,9 @@ use toml;
 
 #[derive(Deserialize, Serialize)]
 pub struct ServerConfig {
+    pub projectfolder_path: String,
     pub ip_address:String,
     pub port: u16,
-    pub project_dir: String,
 }
 
 pub fn parse_config() -> ServerConfig{
